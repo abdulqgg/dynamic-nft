@@ -7,7 +7,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
+
+contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
