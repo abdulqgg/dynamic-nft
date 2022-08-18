@@ -34,6 +34,8 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
 
     ];
 
+    event TokensUpdated(string marketTrend);
+
     constructor(uint256 updateInterval, address _priceFeed) ERC721("Bull&Bear", "BBTK") {
         interval = updateInterval;
         lastTimeStamp = block.timestamp;
@@ -54,6 +56,57 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
 
     function checkUpkeep(bytes calldata /*checkData*/) external view override returns(bool upkeepNeeded, bytes memory /*performData*/) {
         upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+    }
+
+    function performUpkeep(bytes calldata /*perfromData*/) external override {
+        if ((block.timestamp - lastTimeStamp) > interval) {
+            lastTimeStamp = block.timestamp;
+            int latestPrice = getLatestPrice();
+
+            if(latestPrice == currentPrice) {
+                return;
+            }
+            if(latestPrice < currentPrice) {
+                // bear
+                updateAllTokensUris("bear");
+            } else {
+                // bull
+                updateAllTokensUris("bull");
+            }
+            currentPrice = latestPrice;
+        }
+    }
+
+    function getLatestPrice() public view returns (int256) {
+        (,int price,,,)=priceFeed.latestRoundData();
+
+        return price;
+    }
+
+    function updateAllTokensUris(string memory trend) internal {
+        if (compareStrings("bear", trend)) {
+            for(uint256 i =0; i < _tokenIdCounter.current(); i++){
+                _setTokenURI(i, bearUrisIpfs[0]);
+            }
+        } else {
+            for(uint256 i =0; i < _tokenIdCounter.current(); i++){
+                _setTokenURI(i, bullUrisIpfs[0]);
+            }
+        }
+
+        emit TokensUpdated(trend);
+    }
+
+    function setInterval(uint256 newInterval) public onlyOwner {
+        interval = newInterval;
+    }
+
+    function setPriceFeed(address newFeed) public onlyOwner {
+        priceFeed = AggregatorV3Interface(newFeed);
+    }
+
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b)));
     }
 
     // The following functions are overrides required by Solidity.
