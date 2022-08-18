@@ -15,14 +15,45 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
+    uint public /*immutable*/ interval;
+    uint public lastTimeStamp;
 
-    constructor() ERC721("Bull&Bear", "BBTK") {}
+    AggregatorV3Interface public priceFeed;
+    int256 public currentPrice;
 
-    function safeMint(address to, string memory uri) public onlyOwner {
+    string[] bullUrisIpfs = [
+        "https://ipfs.io/ipfs/QmRXyfi3oNZCubDxiVFre3kLZ8XeGt6pQsnAQRZ7akhSNs?filename=gamer_bull.json",
+        "https://ipfs.io/ipfs/QmRJVFeMrtYS2CUVUM2cHJpBV5aX2xurpnsfZxLTTQbiD3?filename=party_bull.json",
+        "https://ipfs.io/ipfs/QmdcURmN1kEEtKgnbkVJJ8hrmsSWHpZvLkRgsKKoiWvW9g?filename=simple_bull.json"
+    ];
+
+    string[] bearUrisIpfs = [
+        "https://ipfs.io/ipfs/Qmdx9Hx7FCDZGExyjLR6vYcnutUR8KhBZBnZfAPHiUommN?filename=beanie_bear.json",
+        "https://ipfs.io/ipfs/QmTVLyTSuiKGUEmb88BgXG3qNC8YgpHZiFbjHrXKH3QHEu?filename=coolio_bear.json",
+        "https://ipfs.io/ipfs/QmbKhBXVWmwrYsTPFYfroR2N7NAekAMxHUVg2CWks7i9qj?filename=simple_bear.json"
+
+    ];
+
+    constructor(uint256 updateInterval, address _priceFeed) ERC721("Bull&Bear", "BBTK") {
+        interval = updateInterval;
+        lastTimeStamp = block.timestamp;
+
+        priceFeed = AggregatorV3Interface(_priceFeed);
+
+        currentPrice = getLatestPrice();  
+    }
+
+    function safeMint(address to) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+
+        string memory defaultUri = bullUrisIpfs[0];
+        _setTokenURI(tokenId, defaultUri);
+    }
+
+    function checkUpkeep(bytes calldata /*checkData*/) external view override returns(bool upkeepNeeded, bytes memory /*performData*/) {
+        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
     }
 
     // The following functions are overrides required by Solidity.
