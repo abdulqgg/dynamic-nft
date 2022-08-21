@@ -35,18 +35,17 @@ contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage
 
     ];
 
-    // Randomness
-    bytes32 internal keyHash;
-    uint256 internal fee;
-    uint256 public randomResult;
+    uint256 public fee;
+    bytes32 public keyHash;
+    uint256 public randomness;
 
     event TokensUpdated(string marketTrend);
 
-    constructor(uint256 updateInterval, address _priceFeed) 
-        ERC721("Bull&Bear", "BBTK") 
+    constructor(uint256 updateInterval, address _priceFeed, address _vrfCoordinator, address _link, uint256 _fee, bytes32 _keyhash) 
+        ERC721("Bull&Bear", "BBTK")
         VRFConsumerBase(
-            0x2bce784e69d2Ff36c71edcB9F88358dB0DfB55b4,
-            0x326C977E6efc84E512bB9C30f76E30c160eD06FB 
+            _vrfCoordinator,
+            _link 
         ){
         interval = updateInterval;
         lastTimeStamp = block.timestamp;
@@ -54,6 +53,20 @@ contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage
         priceFeed = AggregatorV3Interface(_priceFeed);
 
         currentPrice = getLatestPrice();  
+
+        fee = _fee;
+        keyHash = _keyhash;
+    }
+
+    function getRandomNumber() public returns (bytes32 requestId) {
+        return requestRandomness(keyHash, fee);
+    }
+
+
+    function fulfillRandomness(bytes32 _requestId, uint256 _randomness) internal override {
+        require(_randomness > 0, "random-not-found");
+        uint256 indexNft = _randomness % bullUrisIpfs.length;
+        return indexNft
     }
 
     function safeMint(address to) public onlyOwner {
