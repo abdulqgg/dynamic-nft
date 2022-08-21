@@ -6,12 +6,13 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
+contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -34,9 +35,19 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
 
     ];
 
+    // Randomness
+    bytes32 internal keyHash;
+    uint256 internal fee;
+    uint256 public randomResult;
+
     event TokensUpdated(string marketTrend);
 
-    constructor(uint256 updateInterval, address _priceFeed) ERC721("Bull&Bear", "BBTK") {
+    constructor(uint256 updateInterval, address _priceFeed) 
+        ERC721("Bull&Bear", "BBTK") 
+        VRFConsumerBase(
+            0x2bce784e69d2Ff36c71edcB9F88358dB0DfB55b4,
+            0x326C977E6efc84E512bB9C30f76E30c160eD06FB 
+        ){
         interval = updateInterval;
         lastTimeStamp = block.timestamp;
 
