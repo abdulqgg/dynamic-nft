@@ -66,7 +66,7 @@ contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage
     function fulfillRandomness(bytes32 _requestId, uint256 _randomness) internal override {
         require(_randomness > 0, "random-not-found");
         uint256 indexNft = _randomness % bullUrisIpfs.length;
-        return indexNft
+        randomness = _randomness;
     }
 
     function safeMint(address to) public onlyOwner {
