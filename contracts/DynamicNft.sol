@@ -39,6 +39,9 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
 
     ];
 
+    enum MarketTrend{BULL, BEAR} // Create Enum
+    MarketTrend public currentMarketTrend = MarketTrend.BULL; 
+
     uint64 s_subscriptionId;
     address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
     bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
@@ -61,14 +64,14 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
         lastTimeStamp = block.timestamp;
 
         priceFeed = AggregatorV3Interface(_priceFeed);
-
         currentPrice = getLatestPrice();  
         
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         s_subscriptionId = subscriptionId;
+        
     }
 
-    function requestRandomWords() external onlyOwner {
+    function requestRandomness() internal {
         s_requestId = COORDINATOR.requestRandomWords(
             keyHash,
             s_subscriptionId,
@@ -80,7 +83,19 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
 
     function fulfillRandomWords(uint256, /* requestId */ uint256[] memory randomWords) internal override {
         s_randomWords = randomWords;
+
+        string[] memory urisForTrend = currentMarketTrend == MarketTrend.BEAR ? bearUrisIpfs : bullUrisIpfs;
+        uint256 index = randomWords[0] % urisForTrend.length;
+
+        for (uint i = 0; i < _tokenIdCounter.current(); i++) {
+            _setTokenURI(i, urisForTrend[index]);
+        }
+        
+        string memory trend = currentMarketTrend == MarketTrend.BULL ? "bullish" : "bearish";
+    
+        emit TokensUpdated(trend);
     }
+
 
     function safeMint(address to) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
@@ -105,11 +120,15 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
             }
             if(latestPrice < currentPrice) {
                 // bear
-                updateAllTokensUris("bear");
+                currentMarketTrend = MarketTrend.BEAR;
             } else {
                 // bull
-                updateAllTokensUris("bull");
+                currentMarketTrend = MarketTrend.BULL;
             }
+            
+            // Call function for randomness
+            requestRandomness();
+
             currentPrice = latestPrice;
         }
     }
@@ -118,20 +137,6 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
         (,int price,,,)=priceFeed.latestRoundData();
 
         return price;
-    }
-
-    function updateAllTokensUris(string memory trend) internal {
-        if (compareStrings("bear", trend)) {
-            for(uint256 i =0; i < _tokenIdCounter.current(); i++){
-                _setTokenURI(i, bearUrisIpfs[0]);
-            }
-        } else {
-            for(uint256 i =0; i < _tokenIdCounter.current(); i++){
-                _setTokenURI(i, bullUrisIpfs[0]);
-            }
-        }
-
-        emit TokensUpdated(trend);
     }
 
     function setInterval(uint256 newInterval) public onlyOwner {
