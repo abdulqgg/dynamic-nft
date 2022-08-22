@@ -12,8 +12,12 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+
+contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
+    VRFCoordinatorV2Interface COORDINATOR;
 
     Counters.Counter private _tokenIdCounter;
     uint public /*immutable*/ interval;
@@ -34,16 +38,24 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
         "https://ipfs.io/ipfs/QmbKhBXVWmwrYsTPFYfroR2N7NAekAMxHUVg2CWks7i9qj?filename=simple_bear.json"
 
     ];
-/*
-    uint256 public fee;
-    bytes32 public keyHash;
-    uint256 public randomness;
-*/
+
+    uint64 s_subscriptionId;
+    address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
+    bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
+    uint32 callbackGasLimit = 100000;
+    uint16 requestConfirmations = 3;
+    uint32 numWords =  2;
+
+    uint256[] public s_randomWords;
+    uint256 public s_requestId;
+    address s_owner;
+
+
     event TokensUpdated(string marketTrend);
 
-    constructor(uint256 updateInterval, address _priceFeed /*, address _vrfCoordinator, address _link, uint256 _fee, bytes32 _keyhash*/) 
+    constructor(uint256 updateInterval, address _priceFeed, uint64 subscriptionId) 
         ERC721("Bull&Bear", "BBTK")
-       
+        VRFConsumerBaseV2(vrfCoordinator)
         {
         interval = updateInterval;
         lastTimeStamp = block.timestamp;
@@ -51,23 +63,25 @@ contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, Keeper
         priceFeed = AggregatorV3Interface(_priceFeed);
 
         currentPrice = getLatestPrice();  
-        /*
-        fee = _fee;
-        keyHash = _keyhash;
-        */
-    }
-/*
-    function getRandomNumber() public returns (bytes32 requestId) {
-        return requestRandomness(keyHash, fee);
+        
+        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
+        s_subscriptionId = subscriptionId;
     }
 
-
-    function fulfillRandomness(bytes32 _requestId, uint256 _randomness) internal override {
-        require(_randomness > 0, "random-not-found");
-        uint256 indexNft = _randomness % bullUrisIpfs.length;
-        randomness = _randomness;
+    function requestRandomWords() external onlyOwner {
+        s_requestId = COORDINATOR.requestRandomWords(
+            keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+            );
     }
-*/
+
+    function fulfillRandomWords(uint256, /* requestId */ uint256[] memory randomWords) internal override {
+        s_randomWords = randomWords;
+    }
+
     function safeMint(address to) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
