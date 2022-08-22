@@ -12,7 +12,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
+contract BullBear is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable, KeeperCompatibleInterface {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -34,30 +34,29 @@ contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage
         "https://ipfs.io/ipfs/QmbKhBXVWmwrYsTPFYfroR2N7NAekAMxHUVg2CWks7i9qj?filename=simple_bear.json"
 
     ];
-
+/*
     uint256 public fee;
     bytes32 public keyHash;
     uint256 public randomness;
-
+*/
     event TokensUpdated(string marketTrend);
 
-    constructor(uint256 updateInterval, address _priceFeed, address _vrfCoordinator, address _link, uint256 _fee, bytes32 _keyhash) 
+    constructor(uint256 updateInterval, address _priceFeed /*, address _vrfCoordinator, address _link, uint256 _fee, bytes32 _keyhash*/) 
         ERC721("Bull&Bear", "BBTK")
-        VRFConsumerBase(
-            _vrfCoordinator,
-            _link 
-        ){
+       
+        {
         interval = updateInterval;
         lastTimeStamp = block.timestamp;
 
         priceFeed = AggregatorV3Interface(_priceFeed);
 
         currentPrice = getLatestPrice();  
-
+        /*
         fee = _fee;
         keyHash = _keyhash;
+        */
     }
-
+/*
     function getRandomNumber() public returns (bytes32 requestId) {
         return requestRandomness(keyHash, fee);
     }
@@ -68,7 +67,7 @@ contract BullBear is VRFConsumerBase, ERC721, ERC721Enumerable, ERC721URIStorage
         uint256 indexNft = _randomness % bullUrisIpfs.length;
         randomness = _randomness;
     }
-
+*/
     function safeMint(address to) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
