@@ -75,7 +75,7 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
         s_requestId = COORDINATOR.requestRandomWords(
             keyHash,
             s_subscriptionId,
-            requestConfirmations,
+            3,
             callbackGasLimit,
             numWords
             );
@@ -84,7 +84,7 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
     function fulfillRandomWords(uint256, /* requestId */ uint256[] memory randomWords) internal override {
         s_randomWords = randomWords;
 
-        string[] memory urisForTrend = currentMarketTrend == MarketTrend.BEAR ? bearUrisIpfs : bullUrisIpfs;
+        string[] memory urisForTrend = currentMarketTrend == MarketTrend.BULL ? bullUrisIpfs : bearUrisIpfs;
         uint256 index = randomWords[0] % urisForTrend.length;
 
         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
