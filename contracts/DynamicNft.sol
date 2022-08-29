@@ -45,7 +45,7 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
     uint64 s_subscriptionId;
     address vrfCoordinator = 0x6168499c0cFfCaCD319c818142124B7A15E857ab;
     bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
-    uint32 callbackGasLimit = 100000;
+    uint32 callbackGasLimit = 1000000;
     uint16 requestConfirmations = 3;
     uint32 numWords =  2;
 
@@ -86,11 +86,12 @@ contract BullBear is VRFConsumerBaseV2, ERC721, ERC721Enumerable, ERC721URIStora
 
         string[] memory urisForTrend = currentMarketTrend == MarketTrend.BULL ? bullUrisIpfs : bearUrisIpfs;
         uint256 index = randomWords[0] % urisForTrend.length;
-
+        _setTokenURI(0, urisForTrend[index]);
+        /*
         for (uint i = 0; i < _tokenIdCounter.current(); i++) {
             _setTokenURI(i, urisForTrend[index]);
         }
-        
+        */
         string memory trend = currentMarketTrend == MarketTrend.BULL ? "bullish" : "bearish";
     
         emit TokensUpdated(trend);
