@@ -14,3 +14,6 @@ Followed Alchemy's tutorial.
 - Hosted IPFS node
 - Openzepplin contracts
  
+### Community support:
+
+https://ethereum.stackexchange.com/questions/134296/dynamic-nft-not-updating-when-calling-performupkeep-because-vrf-error 
