@@ -1,5 +1,5 @@
 # dynamic-nft
-### Dynamic Nfts thta change based on market price. 
+### Dynamic Nfts that change based on market price. 
 
 Followed Alchemy's tutorial. 
 
